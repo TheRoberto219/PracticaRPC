@@ -5,43 +5,73 @@
  */
 
 #include "calculadora.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-
-void
-calculadora_prog_1(char *host)
-{
-	CLIENT *clnt;
-	float  *result_1;
-	operacion  calcular_1_arg;
-
-#ifndef	DEBUG
-	clnt = clnt_create (host, CALCULADORA_PROG, CALCULADORA_VERS, "udp");
-	if (clnt == NULL) {
-		clnt_pcreateerror (host);
-		exit (1);
-	}
-#endif	/* DEBUG */
-
-	result_1 = calcular_1(&calcular_1_arg, clnt);
-	if (result_1 == (float *) NULL) {
-		clnt_perror (clnt, "call failed");
-	}
-#ifndef	DEBUG
-	clnt_destroy (clnt);
-#endif	 /* DEBUG */
+void calculadora_prog_1(char *host, float num1, float num2, char operador) {
+    CLIENT *clnt;
+    float *result;
+    operacion op;
+    
+    // Configurar la estructura de operación
+    op.a = num1;
+    op.b = num2;
+    op.operador = operador;
+    
+    // Crear el cliente RPC
+    clnt = clnt_create(host, CALCULADORA_PROG, CALCULADORA_VERS, "udp");
+    if (clnt == NULL) {
+        clnt_pcreateerror(host);
+        exit(1);
+    }
+    
+    // Llamar al procedimiento remoto
+    result = calcular_1(&op, clnt);
+    if (result == NULL) {
+        clnt_perror(clnt, "call failed");
+        exit(1);
+    }
+    
+    // Mostrar el resultado
+    printf("Resultado: %.2f %c %.2f = %.2f\n", num1, operador, num2, *result);
+    
+    // Liberar recursos
+    clnt_destroy(clnt);
 }
 
-
-int
-main (int argc, char *argv[])
-{
-	char *host;
-
-	if (argc < 2) {
-		printf ("usage: %s server_host\n", argv[0]);
-		exit (1);
-	}
-	host = argv[1];
-	calculadora_prog_1 (host);
-exit (0);
+int main(int argc, char *argv[]) {
+    char *host;
+    float num1, num2;
+    char operador;
+    
+    // Verificar argumentos
+    if (argc != 5) {
+        printf("Uso: %s servidor num1 num2 operador\n", argv[0]);
+        printf("Operadores permitidos: +, -, *, /\n");
+        exit(1);
+    }
+    
+    // Obtener argumentos
+    host = argv[1];
+    num1 = atof(argv[2]);
+    num2 = atof(argv[3]);
+    operador = argv[4][0]; // Tomar solo el primer carácter
+    
+    // Validar operador
+    if (strchr("+-*/", operador) == NULL) {
+        printf("Error: Operador no válido. Use +, -, * o /\n");
+        exit(1);
+    }
+    
+    // Verificar división por cero
+    if (operador == '/' && num2 == 0.0) {
+        printf("Error: No se puede dividir por cero\n");
+        exit(1);
+    }
+    
+    // Llamar a la función del cliente
+    calculadora_prog_1(host, num1, num2, operador);
+    
+    return 0;
 }
