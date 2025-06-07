@@ -1,14 +1,14 @@
 /* calculadora.x - Definición de la interfaz para la calculadora RPC */
+/* Versión mejorada con todos los parámetros en una sola estructura */
 
-const MAX_OP = 1;
-
-struct operandos {
-    double a;
-    double b;
+struct operacion {
+    float a;
+    float b;
+    char operador;
 };
 
-program CALCULADORA {
-    version CALCULADORA_V1 {
-        double calcular(operandos, char) = 1;
+program CALCULADORA_PROG {
+    version CALCULADORA_VERS {
+        float calcular(operacion) = 1;
     } = 1;
-} = 0x20000001;
+} = 0x31234567;
